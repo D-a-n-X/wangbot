@@ -11,7 +11,7 @@ target/
 *.iws
 *.iml
 *.ipr
-src/main/java/org.example/Token.java
+*.env
 
 ### Eclipse ###
 .apt_generated

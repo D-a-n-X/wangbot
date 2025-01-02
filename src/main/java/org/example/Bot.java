@@ -4,6 +4,7 @@ import discord4j.core.DiscordClient;
 import discord4j.core.GatewayDiscordClient;
 import discord4j.core.event.domain.message.MessageCreateEvent;
 import discord4j.core.object.entity.Message;
+import io.github.cdimascio.dotenv.Dotenv;
 import reactor.core.publisher.Mono;
 
 /**
@@ -14,7 +15,8 @@ public class Bot
 {
     public static void main( String[] args )
     {
-        DiscordClient client = DiscordClient.create(Token.getToken());
+        String token = Dotenv.load().get("TOKEN");
+        DiscordClient client = DiscordClient.create(token);
 
         Mono<Void> login = client.withGateway((GatewayDiscordClient gateway) -> {
             Mono<Void> handlePingCommand = gateway.on(MessageCreateEvent.class, event -> {
