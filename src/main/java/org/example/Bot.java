@@ -14,7 +14,7 @@ public class Bot
 {
     public static void main( String[] args )
     {
-        DiscordClient client = DiscordClient.create("MTMyNDI5MTU4OTAwNjI5OTIwOQ.GwGCc2.0l1XWacD8qSFw6zleZq8oMoD7dzfLkeSdS5M30");
+        DiscordClient client = DiscordClient.create(Token.getToken());
 
         Mono<Void> login = client.withGateway((GatewayDiscordClient gateway) -> {
             Mono<Void> handlePingCommand = gateway.on(MessageCreateEvent.class, event -> {
