@@ -6,5 +6,8 @@ WORKDIR /app
 # Copy the jar file into the container
 COPY target/wangbot-1.0-SNAPSHOT.jar app.jar
 
+# Set the environment variable
+ENV TOKEN=$(grep TOKEN token.env | cut -d '=' -f2)
+
 # Run the jar file
 ENTRYPOINT ["java", "-jar", "app.jar"]
