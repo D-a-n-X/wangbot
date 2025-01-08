@@ -8,7 +8,7 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public class Listener extends ListenerAdapter {
+public class URLHandler extends ListenerAdapter {
 
     //Hyperlink regex pattern
     Pattern urlPattern = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
@@ -26,13 +26,6 @@ public class Listener extends ListenerAdapter {
         // getContentDisplay() is a lazy getter which modifies the content for e.g. console view (strip discord formatting)
 
         MessageChannel channel = event.getChannel();
-
-        //Basic ping-pong command
-        if (content.equals("!ping"))
-        {
-            channel.sendMessage("Pong!").queue();
-            // Important to call .queue() on the RestAction returned by sendMessage(...)
-        }
 
         //Regex pattern matching for hyperlinks
         Matcher urlMatcher = urlPattern.matcher(content);

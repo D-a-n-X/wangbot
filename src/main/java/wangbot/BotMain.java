@@ -12,7 +12,7 @@ public class BotMain {
         String token = Dotenv.configure().directory("C:\\Users\\Dan X\\IdeaProjects\\wangbot").filename("token.env").load().get("TOKEN");
 
         JDA api = JDABuilder.createDefault(token)
-                .addEventListeners(new Listener())
+                .addEventListeners(new URLHandler())
                 .enableIntents(GatewayIntent.MESSAGE_CONTENT)
                 .build();
 
