@@ -22,9 +22,9 @@
       <scope>test</scope>
     </dependency>
     <dependency>
-      <groupId>com.discord4j</groupId>
-      <artifactId>discord4j-core</artifactId>
-      <version>3.2.7</version>
+      <groupId>net.dv8tion</groupId>
+      <artifactId>JDA</artifactId>
+      <version>5.2.2</version>
     </dependency>
     <!-- https://mvnrepository.com/artifact/io.github.cdimascio/dotenv-java -->
     <dependency>
