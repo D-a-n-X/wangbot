@@ -50,7 +50,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>wangbot.BotMain</mainClass>
+              <mainClass>wangbot.Main</mainClass>
             </manifest>
           </archive>
         </configuration>
