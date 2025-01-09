@@ -34,6 +34,13 @@ public class URLHandler extends ListenerAdapter {
             String url = urlMatcher.group(0);
             //Check if the link is from twitter/X
             if (url.contains("twitter.com") || url.contains("x.com")) {
+                //Check if link is already a FxTwitter embed
+                if (url.contains("fixupx.com")) {
+                    return;
+                }
+                if (url.contains("fxtwitter.com")) {
+                    return;
+                }
                 //Replace with FxTwitter embed
                 String fix = url.replace("twitter.com", "fxtwitter.com")
                                 .replace("x.com", "fixupx.com");
@@ -44,6 +51,10 @@ public class URLHandler extends ListenerAdapter {
             }
             //Check if the link is from pixiv
             if (url.contains("pixiv.net")) {
+                //Check if link is already a Phixiv embed
+                if (url.contains("phixiv.net")) {
+                    return;
+                }
                 //Replace with phixiv
                 String fix = url.replace("pixiv.net", "phixiv.net");
                 channel.sendMessage(fix).queue(sentMessage -> {
