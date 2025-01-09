@@ -42,6 +42,14 @@ public class URLHandler extends ListenerAdapter {
                     message.suppressEmbeds(true).queue();
                 });
             }
+            //Check if the link is from pixiv
+            if (url.contains("pixiv.com")) {
+                //Replace with phixiv
+                String fix = url.replace("pixiv.com", "phixiv.com");
+                channel.sendMessage(fix).queue(sentMessage -> {
+                    message.suppressEmbeds(true).queue();
+                });
+            }
         }
     }
 }
