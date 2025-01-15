@@ -52,7 +52,7 @@ public class URLHandler extends ListenerAdapter {
 
             //Check if the link is already fixed
             if (containsFix(url)) {
-                continue;
+                return;
             }
             
             //Check if the link is from twitter/X
@@ -69,6 +69,7 @@ public class URLHandler extends ListenerAdapter {
             
             urlMatcher.appendReplacement(response, fix);
         }
+
         urlMatcher.appendTail(response);
         
         if (!response.isEmpty() && containsFix(response.toString()))
