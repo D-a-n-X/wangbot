@@ -36,6 +36,7 @@ public class URLHandler extends ListenerAdapter {
             String url = urlMatcher.group(0);
             String fix = url;
 
+            //Check if the link is already fixed
             if (url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net")) {
                 continue;
             }
