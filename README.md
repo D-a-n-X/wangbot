@@ -1,1 +1,1 @@
-Auto-embed bot on discord for twitter/piviv links
+Bot initially made to replace Twitter/x and Pixiv links on Discord with their embed fix counterpart (FxTwitter/FixupX and Phixiv respectively).
