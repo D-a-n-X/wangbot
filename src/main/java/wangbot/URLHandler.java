@@ -35,6 +35,10 @@ public class URLHandler extends ListenerAdapter {
         {
             String url = urlMatcher.group(0);
             String fix = url;
+
+            if (url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net")) {
+                continue;
+            }
             
             //Check if the link is from twitter/X
             if (url.contains("twitter.com") || url.contains("x.com")) {
