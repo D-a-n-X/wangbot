@@ -5,6 +5,8 @@ import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -35,6 +37,13 @@ public class URLHandler extends ListenerAdapter {
         {
             String url = urlMatcher.group(0);
             String fix = url;
+
+            // Validate URL
+            try {
+                new URL(url);
+            } catch (MalformedURLException e) {
+                continue; // Skip invalid URLs
+            }
 
             //Check if the link is already fixed
             if (url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net")) {
