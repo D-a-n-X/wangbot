@@ -6,6 +6,8 @@ import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URL;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -40,8 +42,8 @@ public class URLHandler extends ListenerAdapter {
 
             // Validate URL
             try {
-                new URL(url);
-            } catch (MalformedURLException e) {
+                new URI(url);
+            } catch (URISyntaxException e) {
                 continue; // Skip invalid URLs
             }
 
