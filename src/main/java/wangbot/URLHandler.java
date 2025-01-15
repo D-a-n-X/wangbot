@@ -15,6 +15,10 @@ public class URLHandler extends ListenerAdapter {
     //Hyperlink regex pattern
     Pattern urlPattern = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
 
+    boolean containsFix(String url) {
+        return url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net");
+    }
+
     @Override
     public void onMessageReceived(MessageReceivedEvent event)
     {
@@ -22,6 +26,7 @@ public class URLHandler extends ListenerAdapter {
         if (event.getAuthor().isBot())
             return;
 
+        //Read the message
         Message message = event.getMessage();
         String content = message.getContentRaw();
         // getContentRaw() is an atomic getter
@@ -46,7 +51,7 @@ public class URLHandler extends ListenerAdapter {
             }
 
             //Check if the link is already fixed
-            if (url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net")) {
+            if (containsFix(url)) {
                 continue;
             }
             
@@ -66,7 +71,7 @@ public class URLHandler extends ListenerAdapter {
         }
         urlMatcher.appendTail(response);
         
-        if (!response.isEmpty())
+        if (!response.isEmpty() && containsFix(response.toString()))
         {
             channel.sendMessage(response.toString()).queue(sentMessage -> {
                 message.suppressEmbeds(true).queue();
