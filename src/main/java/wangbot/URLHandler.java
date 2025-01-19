@@ -15,7 +15,11 @@ import java.util.regex.Pattern;
 public class URLHandler extends ListenerAdapter {
 
     //Hyperlink regex pattern
-    Pattern urlPattern = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern urlPattern = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern twitterPattern = Pattern.compile("https?://(?:www\\.)?(twitter|x)\\.com/([^/]+)/status/\\d+");
+    private static final Pattern pixivPattern = Pattern.compile("https?://(?:www\\.)?pixiv\\.net/en/artworks/\\d+");
+
+    private final PixivAPIHandler pixivAPIHandler = new PixivAPIHandler();
 
     boolean containsFix(String url) {
         return url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net");
@@ -44,7 +48,7 @@ public class URLHandler extends ListenerAdapter {
         while (urlMatcher.find())
         {
             String url = urlMatcher.group(0);
-            String fix;
+            String fix = "";
             String username = "";
 
             // Validate URL
@@ -60,43 +64,36 @@ public class URLHandler extends ListenerAdapter {
             if (containsFix(url)) {
                 return;
             }
+
+            Matcher twitterMatcher = twitterPattern.matcher(url);
+            Matcher pixivMatcher = pixivPattern.matcher(url);
             
             //Check if the link is from twitter/X
-            if (url.contains("twitter.com") || url.contains("x.com")) {
+            if (twitterMatcher.find()) {
                 // Extract username from URL
-                Pattern twitterPattern = Pattern.compile(
-                        "https?://(?:www\\.)?twitter\\.com/([^/]+)/status/\\d+");
-                Matcher twitterMatcher = twitterPattern.matcher(url);
-                Pattern xPattern = Pattern.compile(
-                        "https?://(?:www\\.)?x\\.com/([^/]+)/status/\\d+");
-                Matcher xMatcher = xPattern.matcher(url);
-                if (twitterMatcher.find()) {
-                    username = twitterMatcher.group(1);
-                }
-                if (xMatcher.find()) {
-                    username = xMatcher.group(1);
-                }
-                //Replace with FxTwitter embed
+                username = twitterMatcher.group(2);
+                //Replace with fxtwitter/fixupx
                 fix = url.replace("twitter.com", "fxtwitter.com")
-                            .replace("x.com", "fixupx.com");
+                        .replace("x.com", "fixupx.com");
             }
             //Check if the link is from pixiv
-            else if (url.contains("pixiv.net")) {
-                //Replace with phixiv
-                fix = url.replace("pixiv.net", "phixiv.net");
-            } else {
-                //Ignore other websites
-                continue;
+            else if (pixivMatcher.find()) {
+                //Check for AI generated artwork
+                if (pixivAPIHandler.isAIGenerated(url)) {
+                    fix = "[This artwork is AI generated](" + url + ")";
+                } else {
+                    //Replace with phixiv
+                    fix = url.replace("pixiv.net", "phixiv.net");
+                }
             }
 
             // Add link to message if it's unique
-            if (uniqueLinks.add(fix)) {
-                if (!response.isEmpty()) {
+            if (fix != null && uniqueLinks.add(fix)) {
+                if (response.length() > 0) {
                     response.append("\n");
                 }
                 if (!username.isEmpty()) {
-                    response.append("[Tweet -> @").append(username).append("](")
-                            .append(fix).append(")");
+                    response.append("[Tweet ▸ @").append(username).append("](").append(fix).append(")");
                 } else {
                     response.append(fix);
                 }
@@ -105,8 +102,9 @@ public class URLHandler extends ListenerAdapter {
         
         if (!response.isEmpty() && containsFix(response.toString()))
         {
-            channel.sendMessage(response.toString()).queue(sentMessage ->
-                    message.suppressEmbeds(true).queue());
+            channel.sendMessage(response.toString()).queue(sentMessage -> {
+                message.suppressEmbeds(true).queue();
+            });
         }
     }
 }
