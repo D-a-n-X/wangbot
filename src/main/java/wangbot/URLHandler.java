@@ -81,7 +81,6 @@ public class URLHandler extends ListenerAdapter {
                 //Check for AI generated artwork
                 if (pixivAPIHandler.isAIGenerated(url)) {
                     fix = "[This artwork is AI generated](" + url + ")";
-                    System.out.println("AI generated artwork detected: " + fix);
                 } else {
                     //Replace with phixiv
                     fix = url.replace("pixiv.net", "phixiv.net");
@@ -98,12 +97,10 @@ public class URLHandler extends ListenerAdapter {
                 } else {
                     response.append(fix);
                 }
-                System.out.println("Added fix to response: " + fix);
-                System.out.println("Response: " + response);
             }
         }
         
-        if (!response.isEmpty() && containsFix(response.toString()))
+        if (!response.isEmpty())
         {
             channel.sendMessage(response.toString()).queue(sentMessage -> {
                 message.suppressEmbeds(true).queue();
