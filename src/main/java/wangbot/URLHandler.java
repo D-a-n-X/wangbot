@@ -67,8 +67,14 @@ public class URLHandler extends ListenerAdapter {
                 Pattern twitterPattern = Pattern.compile(
                         "https?://(?:www\\.)?twitter\\.com/([^/]+)/status/\\d+");
                 Matcher twitterMatcher = twitterPattern.matcher(url);
+                Pattern xPattern = Pattern.compile(
+                        "https?://(?:www\\.)?x\\.com/([^/]+)/status/\\d+");
+                Matcher xMatcher = xPattern.matcher(url);
                 if (twitterMatcher.find()) {
                     username = twitterMatcher.group(1);
+                }
+                if (xMatcher.find()) {
+                    username = xMatcher.group(1);
                 }
                 //Replace with FxTwitter embed
                 fix = url.replace("twitter.com", "fxtwitter.com")
@@ -89,7 +95,7 @@ public class URLHandler extends ListenerAdapter {
                     response.append("\n");
                 }
                 if (!username.isEmpty()) {
-                    response.append("[Tweet from @").append(username).append("](")
+                    response.append("[Tweet -> @").append(username).append("](")
                             .append(fix).append(")");
                 } else {
                     response.append(fix);
