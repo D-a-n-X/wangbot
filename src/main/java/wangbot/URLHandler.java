@@ -99,6 +99,7 @@ public class URLHandler extends ListenerAdapter {
                     response.append(fix);
                 }
                 System.out.println("Added fix to response: " + fix);
+                System.out.println("Response: " + response);
             }
         }
         
