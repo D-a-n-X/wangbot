@@ -45,7 +45,10 @@ public class URLHandler extends ListenerAdapter {
 
             // Validate URL
             try {
-                new URI(url);
+                URI uri = new URI(url);
+                // Remove tracking parameters
+                String cleanUrl = uri.getScheme() + "://" + uri.getHost() + uri.getPath();
+                url = cleanUrl;
             } catch (URISyntaxException e) {
                 continue; // Skip invalid URLs
             }
@@ -62,15 +65,20 @@ public class URLHandler extends ListenerAdapter {
                             .replace("x.com", "fixupx.com");
             }
             //Check if the link is from pixiv
-            if (url.contains("pixiv.net")) {
+            else if (url.contains("pixiv.net")) {
                 //Replace with phixiv
                 fix = url.replace("pixiv.net", "phixiv.net");
+            } else {
+                //Ignore other websites
+                continue;
             }
-            
-            urlMatcher.appendReplacement(response, fix);
-        }
 
-        urlMatcher.appendTail(response);
+            //Add link to message
+            if (response.length() > 0) {
+                response.append("\n");
+            }
+            response.append(fix);
+        }
         
         if (!response.isEmpty() && containsFix(response.toString()))
         {
