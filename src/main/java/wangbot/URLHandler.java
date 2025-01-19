@@ -7,6 +7,8 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -34,6 +36,7 @@ public class URLHandler extends ListenerAdapter {
 
         MessageChannel channel = event.getChannel();
         StringBuilder response = new StringBuilder();
+        Set<String> uniqueLinks = new HashSet<>();
 
         //Regex pattern matching for hyperlinks
         Matcher urlMatcher = urlPattern.matcher(content);
@@ -41,14 +44,14 @@ public class URLHandler extends ListenerAdapter {
         while (urlMatcher.find())
         {
             String url = urlMatcher.group(0);
-            String fix = url;
+            String fix;
+            String username = "";
 
             // Validate URL
             try {
                 URI uri = new URI(url);
                 // Remove tracking parameters
-                String cleanUrl = uri.getScheme() + "://" + uri.getHost() + uri.getPath();
-                url = cleanUrl;
+                url = uri.getScheme() + "://" + uri.getHost() + uri.getPath();
             } catch (URISyntaxException e) {
                 continue; // Skip invalid URLs
             }
@@ -60,6 +63,13 @@ public class URLHandler extends ListenerAdapter {
             
             //Check if the link is from twitter/X
             if (url.contains("twitter.com") || url.contains("x.com")) {
+                // Extract username from URL
+                Pattern twitterPattern = Pattern.compile(
+                        "https?://(?:www\\.)?twitter\\.com/([^/]+)/status/\\d+");
+                Matcher twitterMatcher = twitterPattern.matcher(url);
+                if (twitterMatcher.find()) {
+                    username = twitterMatcher.group(1);
+                }
                 //Replace with FxTwitter embed
                 fix = url.replace("twitter.com", "fxtwitter.com")
                             .replace("x.com", "fixupx.com");
@@ -73,18 +83,24 @@ public class URLHandler extends ListenerAdapter {
                 continue;
             }
 
-            //Add link to message
-            if (response.length() > 0) {
-                response.append("\n");
+            // Add link to message if it's unique
+            if (uniqueLinks.add(fix)) {
+                if (!response.isEmpty()) {
+                    response.append("\n");
+                }
+                if (!username.isEmpty()) {
+                    response.append("[Tweet from @").append(username).append("](")
+                            .append(fix).append(")");
+                } else {
+                    response.append(fix);
+                }
             }
-            response.append(fix);
         }
         
         if (!response.isEmpty() && containsFix(response.toString()))
         {
-            channel.sendMessage(response.toString()).queue(sentMessage -> {
-                message.suppressEmbeds(true).queue();
-            });
+            channel.sendMessage(response.toString()).queue(sentMessage ->
+                    message.suppressEmbeds(true).queue());
         }
     }
 }
