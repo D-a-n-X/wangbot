@@ -30,11 +30,13 @@ public class PixivAPIHandler {
 
             // Parse JSON response
             JSONObject jsonResponse = new JSONObject(response);
-            JSONArray tags = jsonResponse.getJSONObject("body").getJSONArray("tags");
+            JSONObject body = jsonResponse.getJSONObject("body");
+            JSONObject tags = body.getJSONObject("tags");
+            JSONArray tagsList = tags.getJSONArray("tags");
 
             // Check for "AI-Generated" tag
-            for (int i = 0; i < tags.length(); i++) {
-                String tag = tags.getJSONObject(i).getString("tag");
+            for (int i = 0; i < tagsList.length(); i++) {
+                String tag = tagsList.getJSONObject(i).getString("tag");
                 if (tag.equals("AI生成")) {
                     return true;
                 }
