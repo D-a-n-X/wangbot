@@ -80,7 +80,7 @@ public class URLHandler extends ListenerAdapter {
             else if (pixivMatcher.find()) {
                 //Check for AI generated artwork
                 if (pixivAPIHandler.isAIGenerated(url)) {
-                    fix = "[This artwork is AI generated](" + url + ")";
+                    fix = "[This artwork is AI generated](<" + url + ">)";
                 } else {
                     //Replace with phixiv
                     fix = url.replace("pixiv.net", "phixiv.net");
