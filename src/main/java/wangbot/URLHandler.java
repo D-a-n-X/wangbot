@@ -89,7 +89,7 @@ public class URLHandler extends ListenerAdapter {
 
             // Add link to message if it's unique
             if (fix != null && uniqueLinks.add(fix)) {
-                if (response.length() > 0) {
+                if (!response.isEmpty()) {
                     response.append("\n");
                 }
                 if (!username.isEmpty()) {
