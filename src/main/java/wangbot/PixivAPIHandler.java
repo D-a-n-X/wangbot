@@ -28,16 +28,21 @@ public class PixivAPIHandler {
             String response = scanner.useDelimiter("\\A").next();
             scanner.close();
 
+            System.out.println("Received response: " + response);
+
             // Parse JSON response
             JSONObject jsonResponse = new JSONObject(response);
             JSONObject body = jsonResponse.getJSONObject("body");
             JSONObject tags = body.getJSONObject("tags");
             JSONArray tagsList = tags.getJSONArray("tags");
 
+            System.out.println("Parsed JSON response");
+
             // Check for "AI-Generated" tag
             for (int i = 0; i < tagsList.length(); i++) {
                 String tag = tagsList.getJSONObject(i).getString("tag");
                 if (tag.equals("AI生成")) {
+                    System.out.println("Artwork is AI generated");
                     return true;
                 }
             }
@@ -50,6 +55,7 @@ public class PixivAPIHandler {
                 throw new RuntimeException(e);
             }
         }
+        System.out.println("Artwork is not AI generated");
         return false;
     }
 }
