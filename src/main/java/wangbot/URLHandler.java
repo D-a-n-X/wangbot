@@ -17,7 +17,7 @@ public class URLHandler extends ListenerAdapter {
     //Hyperlink regex pattern
     private static final Pattern urlPattern = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
     private static final Pattern twitterPattern = Pattern.compile("https?://(?:www\\.)?(twitter|x)\\.com/([^/]+)/status/\\d+");
-    private static final Pattern pixivPattern = Pattern.compile("https?://(?:www\\.)?pixiv\\.net/en/artworks/\\d+");
+    private static final Pattern pixivPattern = Pattern.compile("https?://(?:www\\.)?pixiv\\.net/(?:en/)?artworks/\\d+");
 
     private final PixivAPIHandler pixivAPIHandler = new PixivAPIHandler();
 
@@ -62,7 +62,7 @@ public class URLHandler extends ListenerAdapter {
 
             //Check if the link is already fixed
             if (containsFix(url)) {
-                return;
+                continue;
             }
 
             Matcher twitterMatcher = twitterPattern.matcher(url);
