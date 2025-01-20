@@ -97,7 +97,7 @@ public class URLHandler extends ListenerAdapter {
                 if (!twitterUsername.isEmpty()) {
                     response.append("[Tweet ▸ @").append(twitterUsername).append("](").append(fix).append(")");
                 }
-                if (!pixivUsername.isEmpty()) {
+                else if (!pixivUsername.isEmpty()) {
                     response.append("[Artwork ▸ ").append(pixivUsername).append("](").append(fix).append(")");
                 }
                 else {
