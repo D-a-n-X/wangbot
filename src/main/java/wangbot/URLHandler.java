@@ -49,7 +49,8 @@ public class URLHandler extends ListenerAdapter {
         {
             String url = urlMatcher.group(0);
             String fix = "";
-            String username = "";
+            String twitterUsername = "";
+            String pixivUsername = "";
 
             // Validate URL
             try {
@@ -71,7 +72,7 @@ public class URLHandler extends ListenerAdapter {
             //Check if the link is from twitter/X
             if (twitterMatcher.find()) {
                 // Extract username from URL
-                username = twitterMatcher.group(2);
+                twitterUsername = twitterMatcher.group(2);
                 //Replace with fxtwitter/fixupx
                 fix = url.replace("twitter.com", "fxtwitter.com")
                         .replace("x.com", "fixupx.com");
@@ -83,6 +84,7 @@ public class URLHandler extends ListenerAdapter {
                     fix = "[This artwork is AI generated](<" + url + ">)";
                 } else {
                     //Replace with phixiv
+                    pixivUsername = pixivAPIHandler.getUserName(url);
                     fix = url.replace("pixiv.net", "phixiv.net");
                 }
             }
@@ -92,9 +94,13 @@ public class URLHandler extends ListenerAdapter {
                 if (!response.isEmpty()) {
                     response.append("\n");
                 }
-                if (!username.isEmpty()) {
-                    response.append("[Tweet ▸ @").append(username).append("](").append(fix).append(")");
-                } else {
+                if (!twitterUsername.isEmpty()) {
+                    response.append("[Tweet ▸ @").append(twitterUsername).append("](").append(fix).append(")");
+                }
+                if (!pixivUsername.isEmpty()) {
+                    response.append("[Artwork ▸ ").append(pixivUsername).append("](").append(fix).append(")");
+                }
+                else {
                     response.append(fix);
                 }
             }
