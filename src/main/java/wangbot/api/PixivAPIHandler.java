@@ -1,4 +1,4 @@
-package wangbot;
+package wangbot.api;
 
 import java.io.IOException;
 import java.net.HttpURLConnection;
@@ -32,10 +32,9 @@ public class PixivAPIHandler {
         return new JSONObject(response);
     }
 
-    public boolean isAIGenerated(String url) {
+    public boolean isAIGenerated(JSONObject jsonResponse) {
         try {
             // Parse JSON response
-            JSONObject jsonResponse = fetchJson(url);
             JSONObject body = jsonResponse.getJSONObject("body");
             JSONObject tags = body.getJSONObject("tags");
             JSONArray tagsList = tags.getJSONArray("tags");
@@ -59,9 +58,8 @@ public class PixivAPIHandler {
         return false;
     }
 
-    public String getUserName(String url) {
+    public String getUserName(JSONObject jsonResponse) {
         try {
-            JSONObject jsonResponse = fetchJson(url);
             JSONObject body = jsonResponse.getJSONObject("body");
             return body.getString("userName");
         } catch (Exception e) {

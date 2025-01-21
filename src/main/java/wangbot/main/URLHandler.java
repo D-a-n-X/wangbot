@@ -1,10 +1,14 @@
-package wangbot;
+package wangbot.main;
 
 import net.dv8tion.jda.api.entities.Message;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import org.json.JSONObject;
+import wangbot.api.DexAPIHandler;
+import wangbot.api.PixivAPIHandler;
 
+import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
@@ -18,8 +22,10 @@ public class URLHandler extends ListenerAdapter {
     private static final Pattern urlPattern = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
     private static final Pattern twitterPattern = Pattern.compile("https?://(?:www\\.)?(twitter|x)\\.com/([^/]+)/status/\\d+");
     private static final Pattern pixivPattern = Pattern.compile("https?://(?:www\\.)?pixiv\\.net/(?:en/)?artworks/\\d+");
+    private static final Pattern dexPattern = Pattern.compile("https?://(?:www\\.)?mangadex\\.org/title/[^/]+/[^/]+");
 
     private final PixivAPIHandler pixivAPIHandler = new PixivAPIHandler();
+    private final DexAPIHandler dexAPIHandler = new DexAPIHandler();
 
     boolean containsFix(String url) {
         return url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net");
@@ -68,6 +74,7 @@ public class URLHandler extends ListenerAdapter {
 
             Matcher twitterMatcher = twitterPattern.matcher(url);
             Matcher pixivMatcher = pixivPattern.matcher(url);
+            Matcher dexMatcher = dexPattern.matcher(url);
             
             //Check if the link is from twitter/X
             if (twitterMatcher.find()) {
@@ -79,15 +86,37 @@ public class URLHandler extends ListenerAdapter {
             }
             //Check if the link is from pixiv
             else if (pixivMatcher.find()) {
+                // Fetch JSON response from Pixiv API
+                JSONObject pixivResponse;
+                try {
+                    pixivResponse = pixivAPIHandler.fetchJson(url);
+                } catch (IOException | URISyntaxException e) {
+                    throw new RuntimeException(e);
+                }
                 //Check for AI generated artwork
-                if (pixivAPIHandler.isAIGenerated(url)) {
+                if (pixivAPIHandler.isAIGenerated(pixivResponse)) {
                     fix = "[This artwork is AI generated](<" + url + ">)";
                 } else {
                     //Replace with phixiv
-                    pixivUsername = pixivAPIHandler.getUserName(url);
+                    pixivUsername = pixivAPIHandler.getUserName(pixivResponse);
                     fix = url.replace("pixiv.net", "phixiv.net");
                 }
             }
+            //TODO: potential dex embed fix, WIP
+//            else if (dexMatcher.find()) {
+//                // Extract manga ID from URL
+//                String mangaId = dexAPIHandler.getID(url);
+//                // Fetch JSON response from MangaDex API
+//                JSONObject dexResponse;
+//                try {
+//                    dexResponse = dexAPIHandler.getMangaInfo(mangaId);
+//                } catch (IOException | InterruptedException e) {
+//                    throw new RuntimeException(e);
+//                }
+//                // Extract manga title
+//                String title = dexResponse.getJSONObject("data").getJSONObject("attributes").getJSONObject("title").getString("en");
+//                fix = "[MangaDex ▸ " + title + "](<" + url + ">)";
+//            }
 
             // Add link to message if it's unique
             if (fix != null && uniqueLinks.add(fix)) {
@@ -108,7 +137,7 @@ public class URLHandler extends ListenerAdapter {
         
         if (!response.isEmpty())
         {
-            channel.sendMessage(response.toString()).queue(sentMessage -> {
+            channel.sendMessage(response.toString()).queue((sentMessage) -> {
                 message.suppressEmbeds(true).queue();
             });
         }

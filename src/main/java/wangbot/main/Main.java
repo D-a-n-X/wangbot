@@ -1,4 +1,4 @@
-package wangbot;
+package wangbot.main;
 
 
 import net.dv8tion.jda.api.JDA;
