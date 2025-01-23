@@ -72,6 +72,7 @@ public class DexAPIHandler {
 
     public JSONObject getAuthor (String id) throws IOException, InterruptedException {
         String endpoint = "/author/" + id;
+        System.out.println(endpoint);
         URI url = apiURL.resolve(endpoint);
 
         HttpResponse<String> response;
