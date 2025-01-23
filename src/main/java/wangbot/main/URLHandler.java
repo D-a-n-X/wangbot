@@ -151,7 +151,7 @@ public class URLHandler extends ListenerAdapter {
                     description = "No description available.";
                 }
 
-                // Extract author(s) and artist(s)
+                // Extract and get author(s) and artist(s)
                 ArrayList<String> authors = new ArrayList<>();
                 ArrayList<String> artists = new ArrayList<>();
 
@@ -199,6 +199,20 @@ public class URLHandler extends ListenerAdapter {
                 // Extract content rating
                 String contentRating = attributes.getString("contentRating");
 
+                // Get banner image
+                String bannerUrl = "https://og.mangadex.org/og-image/manga/" + mangaId;
+
+                // Get statistics
+                JSONObject ratings;
+                try {
+                    ratings = dexAPIHandler.getStatistics(mangaId)
+                                .getJSONObject("statistics")
+                                .getJSONObject(mangaId).getJSONObject("ratings");
+
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+                double rating = ratings.getDouble("average");
                 // End of attribute fetching
 
                 // Create embed
@@ -206,9 +220,11 @@ public class URLHandler extends ListenerAdapter {
                         .setDescription(description)
                         .addField("Author", String.join(", ", authors), true)
                         .addField("Artist", String.join(", ", artists), true)
-                        .addField("Publication Status", String.valueOf(year).concat(", " + status), true)
+                        .addField("", String.format("%.2f", rating), true)
+                        .addField("Publication Status", String.valueOf(year).concat(", " + status), false)
                         .addField("Tags", String.join(", ", tags), false)
                         .setThumbnail("https://mangadex.org/favicon.ico")
+                        .setImage(bannerUrl)
                         .setFooter("Content Rating: " + contentRating);
             }
 
@@ -238,22 +254,13 @@ public class URLHandler extends ListenerAdapter {
 
         if (!embedBuilder.isEmpty())
         {
-            // Create a MessageCreateBuilder
+            MessageEmbed embed = embedBuilder.build();
+            // Create a MessageCreateBuilder and add the embed
             MessageCreateBuilder messageBuilder = new MessageCreateBuilder();
+            messageBuilder.setEmbeds(embed);
 
-            // Send the message and wait for it to be sent
-            CompletableFuture<Message> future = channel.sendMessage(messageBuilder.build()).submit();
-
-            // Wait for the message to be sent and then fetch the data
-            future.thenAccept(sentMessage -> {
-                // Fetch the data from the embed
-                List<MessageEmbed> embeds = sentMessage.getEmbeds();
-                if (!embeds.isEmpty()) {
-                    // Fetch banner image of embed
-                    embedBuilder.setImage(Objects.requireNonNull(embeds.getFirst().getImage()).getUrl());
-                    MessageEmbed embed = embedBuilder.build();
-                    messageBuilder.addEmbeds(embed);
-                }
+            // Send the message
+            channel.sendMessage(messageBuilder.build()).queue((sentMessage) -> {
                 message.suppressEmbeds(true).queue();
             });
         }

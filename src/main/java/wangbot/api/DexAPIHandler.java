@@ -109,4 +109,24 @@ public class DexAPIHandler {
             throw new IOException("Failed to fetch artist info: " + response.statusCode());
         }
     }
+
+    public JSONObject getStatistics (String id) throws IOException, InterruptedException {
+        String endpoint = "/statistics/manga/" + id;
+        URI url = apiURL.resolve(endpoint);
+
+        HttpResponse<String> response;
+        try (HttpClient client = HttpClient.newHttpClient()) {
+            HttpRequest request = createRequestBuilder(url)
+                    .GET()
+                    .build();
+
+            response = client.send(request, HttpResponse.BodyHandlers.ofString());
+        }
+
+        if (response.statusCode() == 200) {
+            return new JSONObject(response.body());
+        } else {
+            throw new IOException("Failed to fetch manga statistics: " + response.statusCode());
+        }
+    }
 }
