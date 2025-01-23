@@ -153,32 +153,34 @@ public class URLHandler extends ListenerAdapter {
                     description = "No description available.";
                 }
 
-                // Extract author
-                String authorId = data.getJSONArray("relationships")
-                        .getJSONObject(0)
-                        .getString("id");
-                String author;
-                try {
-                    author = dexAPIHandler.getAuthor(authorId)
-                            .getJSONObject("data")
-                            .getJSONObject("attributes")
-                            .getString("name");
-                } catch (IOException | InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
+                // Extract author(s) and artist(s)
+                ArrayList<String> authors = new ArrayList<>();
+                ArrayList<String> artists = new ArrayList<>();
 
-                // Extract artist
-                String artistId = data.getJSONArray("relationships")
-                        .getJSONObject(1)
-                        .getString("id");
-                String artist;
-                try {
-                    artist = dexAPIHandler.getArtist(artistId)
-                            .getJSONObject("data")
-                            .getJSONObject("attributes")
-                            .getString("name");
-                } catch (IOException | InterruptedException e) {
-                    throw new RuntimeException(e);
+                JSONArray relationships = data.getJSONArray("relationships");
+                for (int i = 0; i < relationships.length(); i++) {
+                    JSONObject relationship = relationships.getJSONObject(i);
+                    String type = relationship.getString("type");
+                    String id = relationship.getString("id");
+                    if (type.equals("author")) {
+                        try {
+                            authors.add(dexAPIHandler.getAuthor(id)
+                                    .getJSONObject("data")
+                                    .getJSONObject("attributes")
+                                    .getString("name"));
+                        } catch (IOException | InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    } else if (type.equals("artist")) {
+                        try {
+                            artists.add(dexAPIHandler.getArtist(id)
+                                    .getJSONObject("data")
+                                    .getJSONObject("attributes")
+                                    .getString("name"));
+                        } catch (IOException | InterruptedException e) {
+                            throw new RuntimeException(e);
+                        }
+                    }
                 }
 
                 // Extract tags
@@ -204,8 +206,8 @@ public class URLHandler extends ListenerAdapter {
                 // Create embed
                 embedBuilder.setTitle(title, mangaUrl)
                         .setDescription(description)
-                        .addField("Author", author, true)
-                        .addField("Artist", artist, true)
+                        .addField("Author", String.join(", ", authors), true)
+                        .addField("Artist", String.join(", ", artists), true)
                         .addField("Publication Status", String.valueOf(year).concat(", " + status), true)
                         .addField("Tags", String.join(", ", tags), false)
                         .setImage(Objects.requireNonNull(message.getEmbeds().getFirst().getImage()).getUrl())

@@ -72,7 +72,6 @@ public class DexAPIHandler {
 
     public JSONObject getAuthor (String id) throws IOException, InterruptedException {
         String endpoint = "/author/" + id;
-        System.out.println(endpoint);
         URI url = apiURL.resolve(endpoint);
 
         HttpResponse<String> response;
@@ -92,7 +91,7 @@ public class DexAPIHandler {
     }
 
     public JSONObject getArtist (String id) throws IOException, InterruptedException {
-        String endpoint = "/artist/" + id;
+        String endpoint = "/author/" + id;
         URI url = apiURL.resolve(endpoint);
 
         HttpResponse<String> response;
@@ -107,7 +106,7 @@ public class DexAPIHandler {
         if (response.statusCode() == 200) {
             return new JSONObject(response.body());
         } else {
-            throw new IOException("Failed to fetch author info: " + response.statusCode());
+            throw new IOException("Failed to fetch artist info: " + response.statusCode());
         }
     }
 }
