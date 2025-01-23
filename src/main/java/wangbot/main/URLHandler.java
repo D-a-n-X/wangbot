@@ -1,9 +1,13 @@
 package wangbot.main;
 
+import net.dv8tion.jda.api.EmbedBuilder;
 import net.dv8tion.jda.api.entities.Message;
+import net.dv8tion.jda.api.entities.MessageEmbed;
 import net.dv8tion.jda.api.entities.channel.middleman.MessageChannel;
 import net.dv8tion.jda.api.events.message.MessageReceivedEvent;
 import net.dv8tion.jda.api.hooks.ListenerAdapter;
+import net.dv8tion.jda.api.utils.messages.MessageCreateBuilder;
+import org.json.JSONArray;
 import org.json.JSONObject;
 import wangbot.api.DexAPIHandler;
 import wangbot.api.PixivAPIHandler;
@@ -11,11 +15,13 @@ import wangbot.api.PixivAPIHandler;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+//Handles messages containing URLs and responses to those messages
 public class URLHandler extends ListenerAdapter {
 
     //Hyperlink regex pattern
@@ -45,6 +51,7 @@ public class URLHandler extends ListenerAdapter {
         // getContentDisplay() is a lazy getter which modifies the content for e.g. console view (strip discord formatting)
 
         MessageChannel channel = event.getChannel();
+        EmbedBuilder embedBuilder = new EmbedBuilder();
         StringBuilder response = new StringBuilder();
         Set<String> uniqueLinks = new HashSet<>();
 
@@ -78,14 +85,18 @@ public class URLHandler extends ListenerAdapter {
             
             //Check if the link is from twitter/X
             if (twitterMatcher.find()) {
+
                 // Extract username from URL
                 twitterUsername = twitterMatcher.group(2);
+
                 //Replace with fxtwitter/fixupx
                 fix = url.replace("twitter.com", "fxtwitter.com")
                         .replace("x.com", "fixupx.com");
             }
+
             //Check if the link is from pixiv
             else if (pixivMatcher.find()) {
+
                 // Fetch JSON response from Pixiv API
                 JSONObject pixivResponse;
                 try {
@@ -93,30 +104,114 @@ public class URLHandler extends ListenerAdapter {
                 } catch (IOException | URISyntaxException e) {
                     throw new RuntimeException(e);
                 }
+
                 //Check for AI generated artwork
                 if (pixivAPIHandler.isAIGenerated(pixivResponse)) {
                     fix = "[This artwork is AI generated](<" + url + ">)";
                 } else {
+
                     //Replace with phixiv
                     pixivUsername = pixivAPIHandler.getUserName(pixivResponse);
                     fix = url.replace("pixiv.net", "phixiv.net");
                 }
             }
-            //TODO: potential dex embed fix, WIP
-//            else if (dexMatcher.find()) {
-//                // Extract manga ID from URL
-//                String mangaId = dexAPIHandler.getID(url);
-//                // Fetch JSON response from MangaDex API
-//                JSONObject dexResponse;
-//                try {
-//                    dexResponse = dexAPIHandler.getMangaInfo(mangaId);
-//                } catch (IOException | InterruptedException e) {
-//                    throw new RuntimeException(e);
-//                }
-//                // Extract manga title
-//                String title = dexResponse.getJSONObject("data").getJSONObject("attributes").getJSONObject("title").getString("en");
-//                fix = "[MangaDex ▸ " + title + "](<" + url + ">)";
-//            }
+
+            //Check if the link is from MangaDex
+            else if (dexMatcher.find()) {
+
+                // Extract manga ID from URL
+                String mangaId = dexAPIHandler.getID(url);
+
+                // Fetch JSON response from MangaDex API
+                JSONObject dexResponse;
+                try {
+                    dexResponse = dexAPIHandler.getMangaInfo(mangaId);
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                // Start of attribute fetching for embed builder
+
+                // Get attribute object
+                JSONObject attributes = dexResponse.getJSONObject("data")
+                        .getJSONObject("attributes");
+
+                // Extract full manga title
+                String title = attributes.getJSONObject("title")
+                            .getString("en");
+
+                // Create link to manga
+                String mangaUrl = "https://mangadex.org/title/" + mangaId;
+
+                // Extract description
+                String description = attributes.getJSONObject("description")
+                            .getString("en");
+                if (description.isEmpty()) {
+                    description = "No description available.";
+                }
+
+                // Extract author
+                String authorId = attributes.getJSONArray("relationships")
+                        .getJSONObject(0)
+                        .getString("id");
+                String author;
+                try {
+                    author = dexAPIHandler.getAuthor(authorId)
+                            .getJSONObject("data")
+                            .getJSONObject("attributes")
+                            .getString("name");
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                // Extract artist
+                String artistId = attributes.getJSONArray("relationships")
+                        .getJSONObject(1)
+                        .getString("id");
+                String artist;
+                try {
+                    artist = dexAPIHandler.getArtist(authorId)
+                            .getJSONObject("data")
+                            .getJSONObject("attributes")
+                            .getString("name");
+                } catch (IOException | InterruptedException e) {
+                    throw new RuntimeException(e);
+                }
+
+                // Extract cover image
+                String coverUrl = "https://uploads.mangadex.org/covers/" + mangaId + "/cover.jpg";
+
+                // Extract tags
+                ArrayList<String> tags = new ArrayList<>();
+                JSONArray tagsArray = attributes.getJSONArray("tags");
+                for (int i = 0; i < tagsArray.length(); i++) {
+                    JSONObject tagObject = tagsArray.getJSONObject(i);
+                    String tagName = tagObject.getJSONObject("attributes")
+                            .getJSONObject("name")
+                            .getString("en");
+                    tags.add(tagName);
+                }
+
+                // Extract publication year and status
+                int year = attributes.getInt("year");
+                String status = attributes.getString("status");
+
+                // Extract content rating
+                String contentRating = attributes.getString("contentRating");
+
+                // End of attribute fetching
+
+                // Create embed
+                embedBuilder.setTitle(title, mangaUrl)
+                        .setDescription(description)
+                        .addField("Author", author, true)
+                        .addField("Artist", artist, true)
+                        .addField("Publication Status", String.valueOf(year).concat(", " + status), true)
+                        .addField("Tags", String.join(", ", tags), false)
+                        .setImage(message.getEmbeds().getFirst().getImage().getUrl())
+                        .setThumbnail("https://mangadex.org/favicon.ico")
+                        .setFooter("Content Rating: " + contentRating);
+            }
 
             // Add link to message if it's unique
             if (fix != null && uniqueLinks.add(fix)) {
@@ -138,6 +233,19 @@ public class URLHandler extends ListenerAdapter {
         if (!response.isEmpty())
         {
             channel.sendMessage(response.toString()).queue((sentMessage) -> {
+                message.suppressEmbeds(true).queue();
+            });
+        }
+
+        if (!embedBuilder.isEmpty())
+        {
+            MessageEmbed embed = embedBuilder.build();
+            // Create a MessageCreateBuilder and add the embed
+            MessageCreateBuilder messageBuilder = new MessageCreateBuilder();
+            messageBuilder.setEmbeds(embed);
+
+            // Send the message
+            channel.sendMessage(messageBuilder.build()).queue((sentMessage) -> {
                 message.suppressEmbeds(true).queue();
             });
         }
