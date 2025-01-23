@@ -133,9 +133,11 @@ public class URLHandler extends ListenerAdapter {
 
                 // Start of attribute fetching for embed builder
 
+                // Get data object
+                JSONObject data = dexResponse.getJSONObject("data");
+
                 // Get attribute object
-                JSONObject attributes = dexResponse.getJSONObject("data")
-                        .getJSONObject("attributes");
+                JSONObject attributes = data.getJSONObject("attributes");
 
                 // Extract full manga title
                 String title = attributes.getJSONObject("title")
@@ -152,7 +154,7 @@ public class URLHandler extends ListenerAdapter {
                 }
 
                 // Extract author
-                String authorId = attributes.getJSONArray("relationships")
+                String authorId = data.getJSONArray("relationships")
                         .getJSONObject(0)
                         .getString("id");
                 String author;
@@ -166,7 +168,7 @@ public class URLHandler extends ListenerAdapter {
                 }
 
                 // Extract artist
-                String artistId = attributes.getJSONArray("relationships")
+                String artistId = data.getJSONArray("relationships")
                         .getJSONObject(1)
                         .getString("id");
                 String artist;
@@ -178,9 +180,6 @@ public class URLHandler extends ListenerAdapter {
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-
-                // Extract cover image
-                String coverUrl = "https://uploads.mangadex.org/covers/" + mangaId + "/cover.jpg";
 
                 // Extract tags
                 ArrayList<String> tags = new ArrayList<>();
