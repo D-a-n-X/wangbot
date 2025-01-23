@@ -15,10 +15,8 @@ import wangbot.api.PixivAPIHandler;
 import java.io.IOException;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.Objects;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -210,7 +208,6 @@ public class URLHandler extends ListenerAdapter {
                         .addField("Artist", String.join(", ", artists), true)
                         .addField("Publication Status", String.valueOf(year).concat(", " + status), true)
                         .addField("Tags", String.join(", ", tags), false)
-                        .setImage(Objects.requireNonNull(message.getEmbeds().getFirst().getImage()).getUrl())
                         .setThumbnail("https://mangadex.org/favicon.ico")
                         .setFooter("Content Rating: " + contentRating);
             }
@@ -241,13 +238,22 @@ public class URLHandler extends ListenerAdapter {
 
         if (!embedBuilder.isEmpty())
         {
-            MessageEmbed embed = embedBuilder.build();
-            // Create a MessageCreateBuilder and add the embed
+            // Create a MessageCreateBuilder
             MessageCreateBuilder messageBuilder = new MessageCreateBuilder();
-            messageBuilder.setEmbeds(embed);
 
-            // Send the message
-            channel.sendMessage(messageBuilder.build()).queue((sentMessage) -> {
+            // Send the message and wait for it to be sent
+            CompletableFuture<Message> future = channel.sendMessage(messageBuilder.build()).submit();
+
+            // Wait for the message to be sent and then fetch the data
+            future.thenAccept(sentMessage -> {
+                // Fetch the data from the embed
+                List<MessageEmbed> embeds = sentMessage.getEmbeds();
+                if (!embeds.isEmpty()) {
+                    // Fetch banner image of embed
+                    embedBuilder.setImage(Objects.requireNonNull(embeds.getFirst().getImage()).getUrl());
+                    MessageEmbed embed = embedBuilder.build();
+                    messageBuilder.addEmbeds(embed);
+                }
                 message.suppressEmbeds(true).queue();
             });
         }
