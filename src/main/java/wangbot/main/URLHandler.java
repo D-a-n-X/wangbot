@@ -17,6 +17,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashSet;
+import java.util.Objects;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -170,7 +171,7 @@ public class URLHandler extends ListenerAdapter {
                         .getString("id");
                 String artist;
                 try {
-                    artist = dexAPIHandler.getArtist(authorId)
+                    artist = dexAPIHandler.getArtist(artistId)
                             .getJSONObject("data")
                             .getJSONObject("attributes")
                             .getString("name");
@@ -208,7 +209,7 @@ public class URLHandler extends ListenerAdapter {
                         .addField("Artist", artist, true)
                         .addField("Publication Status", String.valueOf(year).concat(", " + status), true)
                         .addField("Tags", String.join(", ", tags), false)
-                        .setImage(message.getEmbeds().getFirst().getImage().getUrl())
+                        .setImage(Objects.requireNonNull(message.getEmbeds().getFirst().getImage()).getUrl())
                         .setThumbnail("https://mangadex.org/favicon.ico")
                         .setFooter("Content Rating: " + contentRating);
             }
