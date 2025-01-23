@@ -207,12 +207,13 @@ public class URLHandler extends ListenerAdapter {
                 try {
                     ratings = dexAPIHandler.getStatistics(mangaId)
                                 .getJSONObject("statistics")
-                                .getJSONObject(mangaId).getJSONObject("ratings");
-
+                                .getJSONObject(mangaId)
+                                .getJSONObject("rating");
                 } catch (IOException | InterruptedException e) {
                     throw new RuntimeException(e);
                 }
-                double rating = ratings.getDouble("average");
+                double mean = ratings.getDouble("average");
+                double bayesian = ratings.getDouble("bayesian");
                 // End of attribute fetching
 
                 // Create embed
@@ -220,7 +221,7 @@ public class URLHandler extends ListenerAdapter {
                         .setDescription(description)
                         .addField("Author", String.join(", ", authors), true)
                         .addField("Artist", String.join(", ", artists), true)
-                        .addField("", String.format("%.2f", rating), true)
+                        .addField("☆" + String.format("%.2f", bayesian),"Mean rating:\n☆" + String.format("%.2f", mean), true)
                         .addField("Publication Status", String.valueOf(year).concat(", " + status), false)
                         .addField("Tags", String.join(", ", tags), false)
                         .setThumbnail("https://mangadex.org/favicon.ico")
