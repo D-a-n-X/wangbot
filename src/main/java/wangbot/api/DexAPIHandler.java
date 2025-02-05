@@ -25,8 +25,6 @@ public class DexAPIHandler {
         }
     }
 
-    private DexAPIHandler dexAPIHandler;
-
     private HttpRequest.Builder createRequestBuilder(URI uri) {
         return HttpRequest.newBuilder()
                 .uri(uri)
@@ -36,12 +34,12 @@ public class DexAPIHandler {
 
     public EmbedBuilder generateDexEmbed(String url) {
         // Extract manga ID from URL
-        String mangaId = dexAPIHandler.getID(url);
+        String mangaId = getID(url);
 
         // Fetch JSON response from MangaDex API
         JSONObject dexResponse;
         try {
-            dexResponse = dexAPIHandler.getMangaInfo(mangaId);
+            dexResponse = getMangaInfo(mangaId);
         } catch (IOException | InterruptedException e) {
             throw new RuntimeException(e);
         }
@@ -79,7 +77,7 @@ public class DexAPIHandler {
             String id = relationship.getString("id");
             if (type.equals("author")) {
                 try {
-                    authors.add(dexAPIHandler.getAuthor(id)
+                    authors.add(getAuthor(id)
                             .getJSONObject("data")
                             .getJSONObject("attributes")
                             .getString("name"));
@@ -88,7 +86,7 @@ public class DexAPIHandler {
                 }
             } else if (type.equals("artist")) {
                 try {
-                    artists.add(dexAPIHandler.getArtist(id)
+                    artists.add(getArtist(id)
                             .getJSONObject("data")
                             .getJSONObject("attributes")
                             .getString("name"));
@@ -122,7 +120,7 @@ public class DexAPIHandler {
         // Get statistics
         JSONObject ratings;
         try {
-            ratings = dexAPIHandler.getStatistics(mangaId)
+            ratings = getStatistics(mangaId)
                     .getJSONObject("statistics")
                     .getJSONObject(mangaId)
                     .getJSONObject("rating");
