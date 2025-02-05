@@ -1,13 +1,14 @@
 package wangbot.api;
 
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.Scanner;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class PixivAPIHandler {
 
@@ -40,16 +41,14 @@ public class PixivAPIHandler {
             JSONArray tagsList = tags.getJSONArray("tags");
 
             // Check for "AI-Generated" tag
-            for (int i = 0; i < Math.min(2,tagsList.length()); i++) {
+            for (int i = 0; i < tagsList.length(); i++) {
                 String tag = tagsList.getJSONObject(i).getString("tag");
                 if (tag.equals("AI生成")) {
                     return true;
                 }
             }
         } catch (Exception e) {
-            if (e instanceof IOException ||
-                    e instanceof JSONException ||
-                    e instanceof URISyntaxException) {
+            if (e instanceof JSONException) {
                 e.printStackTrace();
             } else {
                 throw new RuntimeException(e);
@@ -63,9 +62,7 @@ public class PixivAPIHandler {
             JSONObject body = jsonResponse.getJSONObject("body");
             return body.getString("userName");
         } catch (Exception e) {
-            if (e instanceof IOException ||
-                    e instanceof JSONException ||
-                    e instanceof URISyntaxException) {
+            if (e instanceof JSONException) {
                 e.printStackTrace();
             } else {
                 throw new RuntimeException(e);
