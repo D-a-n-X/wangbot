@@ -25,7 +25,8 @@ public class Main {
         commands.addCommands(
                 Commands.slash("manga", "Generates a nice(?) embed for MangaDex manga links")
                         .addOptions(new OptionData(OptionType.STRING, "url", "The URL of the manga")
-                                .setRequired(true)))
+                                .setRequired(true))
+                        .setGuildOnly(false)) // Make command available in DMs (apparently setContexts() doesn't work)
                 // Send the new set of commands to discord, this will override any existing global commands with the new set provided here
                 .queue();
     }
