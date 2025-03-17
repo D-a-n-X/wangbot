@@ -16,11 +16,18 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.util.HashSet;
 import java.util.Set;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 //Handles messages containing URLs and responses to those messages
 public class URLHandler extends ListenerAdapter {
+
+    private final ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
+
 
     //Hyperlink regex pattern
     private static final Pattern urlPattern = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
@@ -130,6 +137,23 @@ public class URLHandler extends ListenerAdapter {
                     response.append(fix);
                 }
             }
+        }
+
+        // Create a CountDownLatch to block the thread until an embed is detected
+        CountDownLatch latch = new CountDownLatch(1);
+
+        // Schedule a task to check for embeds after a delay
+        scheduler.schedule(() -> {
+            if (!message.getEmbeds().isEmpty()) {
+                latch.countDown(); // Count down the latch when an embed is detected
+            }
+        }, 1, TimeUnit.SECONDS);
+
+        try {
+            latch.await(); // Block the thread until the latch is counted down
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt(); // Restore interrupted status
+            return; // Exit the method if interrupted
         }
 
         if (!response.isEmpty()) {
