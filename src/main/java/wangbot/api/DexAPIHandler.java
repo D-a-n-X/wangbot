@@ -108,7 +108,10 @@ public class DexAPIHandler {
         }
 
         // Extract publication year and status
-        int year = attributes.getInt("year");
+        int year = 0;
+        if (attributes.getJSONObject("year") != null) {
+            year = attributes.getInt("year");
+        }
         String status = attributes.getString("status");
 
         // Extract content rating
@@ -132,19 +135,28 @@ public class DexAPIHandler {
         // End of attribute fetching
 
         // Create embed
-        return new EmbedBuilder()
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        embedBuilder
                 .setAuthor("MangaDex")
                 .setTitle(title, mangaUrl)
                 .setColor(new Color(255, 103, 64))
                 .addField("Author", String.join(", ", authors), true)
                 .addField("Artist", String.join(", ", artists), true)
                 .addField("☆" + String.format("%.2f", bayesian), "Mean rating\n☆" + String.format("%.2f", mean), true)
-                .addField("Tags", String.join(", ", tags), true)
-                .addField("Publication Status", String.valueOf(year).concat(", " + StringUtils.capitalize(status)), true)
+                .addField("Tags", String.join(", ", tags), true);
+
+        //Checks if the year is added
+        if (year != 0)
+            embedBuilder.addField("Publication Status", String.valueOf(year).concat(", " + StringUtils.capitalize(status)), true);
+        else
+            embedBuilder.addField("Publication Status", StringUtils.capitalize(status), true);
+
+        embedBuilder
                 .addField("Description", description, false)
                 .setImage(bannerUrl)
                 .setFooter("Content Rating: " + StringUtils.capitalize(contentRating), "https://mangadex.org/favicon.ico");
 
+        return embedBuilder;
     }
 
     public String getID(String url) {

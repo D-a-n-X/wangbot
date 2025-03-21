@@ -9,6 +9,8 @@ import net.dv8tion.jda.api.hooks.ListenerAdapter;
 import org.jetbrains.annotations.NotNull;
 import wangbot.api.DexAPIHandler;
 
+import java.util.Objects;
+
 public class CommandHandler extends ListenerAdapter {
     private final DexAPIHandler dexAPIHandler = new DexAPIHandler();
 
@@ -34,7 +36,7 @@ public class CommandHandler extends ListenerAdapter {
                 event.reply("Pong!").queue();
             case "manga":
                 event.deferReply().queue(); //Acknowledges the command has been received
-                String url = event.getOption("url").getAsString();
+                String url = Objects.requireNonNull(event.getOption("url")).getAsString();
                 EmbedBuilder embedBuilder = dexAPIHandler.generateDexEmbed(url);
                 event.replyEmbeds(embedBuilder.build()).queue();
         }
