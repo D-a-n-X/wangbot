@@ -2,6 +2,7 @@ package wangbot.api;
 
 import net.dv8tion.jda.api.EmbedBuilder;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 import wangbot.utils.StringUtils;
 
@@ -98,19 +99,25 @@ public class DexAPIHandler {
 
         // Extract tags
         ArrayList<String> tags = new ArrayList<>();
-        JSONArray tagsArray = attributes.getJSONArray("tags");
-        for (int i = 0; i < tagsArray.length(); i++) {
-            JSONObject tagObject = tagsArray.getJSONObject(i);
-            String tagName = tagObject.getJSONObject("attributes")
-                    .getJSONObject("name")
-                    .getString("en");
-            tags.add(tagName);
+        try {
+            JSONArray tagsArray = attributes.getJSONArray("tags");
+            for (int i = 0; i < tagsArray.length(); i++) {
+                JSONObject tagObject = tagsArray.getJSONObject(i);
+                String tagName = tagObject.getJSONObject("attributes")
+                        .getJSONObject("name")
+                        .getString("en");
+                tags.add(tagName);
+            }
+        } catch (JSONException e) {
+            throw new RuntimeException(e);
         }
 
         // Extract publication year and status
-        int year = 0;
-        if (attributes.getJSONObject("year") != null) {
+        int year;
+        try {
             year = attributes.getInt("year");
+        } catch (JSONException e) {
+            year = 0;
         }
         String status = attributes.getString("status");
 
