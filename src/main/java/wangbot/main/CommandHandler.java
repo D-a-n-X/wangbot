@@ -33,6 +33,7 @@ public class CommandHandler extends ListenerAdapter {
             case "ping":
                 event.reply("Pong!").queue();
             case "manga":
+                event.deferReply().queue(); //Acknowledges the command has been received
                 String url = event.getOption("url").getAsString();
                 EmbedBuilder embedBuilder = dexAPIHandler.generateDexEmbed(url);
                 event.replyEmbeds(embedBuilder.build()).queue();
