@@ -105,7 +105,6 @@ public class URLHandler extends ListenerAdapter {
                 if (pixivAPIHandler.isAIGenerated(pixivResponse)) {
                     fix = "[This artwork is AI generated](<" + url + ">)";
                 } else {
-
                     //Replace with phixiv
                     pixivUsername = pixivAPIHandler.getUserName(pixivResponse);
                     fix = url.replace("pixiv.net", "phixiv.net");

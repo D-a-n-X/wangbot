@@ -70,4 +70,21 @@ public class PixivAPIHandler {
         }
         return null;
     }
+
+    //Potentially inefficient, needs to poll every artwork listed to get pageCount
+    public int getPageCount(JSONObject jsonResponse) {
+        try {
+            JSONObject body = jsonResponse.getJSONObject("body");
+            JSONObject illusts = jsonResponse.getJSONObject("userIllusts");
+            JSONObject illustID = illusts.getJSONObject(body.getString("illustId"));
+            return illustID.getInt("pageCount");
+        } catch (Exception e) {
+            if (e instanceof JSONException) {
+                e.printStackTrace();
+            } else {
+                throw new RuntimeException(e);
+            }
+        }
+        return 1;
+    }
 }
