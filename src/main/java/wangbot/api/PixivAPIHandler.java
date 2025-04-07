@@ -37,7 +37,7 @@ public class PixivAPIHandler {
         try {
             // Parse JSON response
             JSONObject body = jsonResponse.getJSONObject("body");
-            JSONObject illusts = jsonResponse.getJSONObject("userIllusts");
+            JSONObject illusts = body.getJSONObject("userIllusts");
             JSONObject illustID = illusts.getJSONObject(body.getString("illustId"));
 
             // Check for AI type (1 = non-AI, 2 = AI)
@@ -70,7 +70,7 @@ public class PixivAPIHandler {
     public int getPageCount(JSONObject jsonResponse) {
         try {
             JSONObject body = jsonResponse.getJSONObject("body");
-            JSONObject illusts = jsonResponse.getJSONObject("userIllusts");
+            JSONObject illusts = body.getJSONObject("userIllusts");
             JSONObject illustID = illusts.getJSONObject(body.getString("illustId"));
             return illustID.getInt("pageCount");
         } catch (Exception e) {
