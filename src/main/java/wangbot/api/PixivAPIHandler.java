@@ -37,16 +37,11 @@ public class PixivAPIHandler {
         try {
             // Parse JSON response
             JSONObject body = jsonResponse.getJSONObject("body");
-            JSONObject tags = body.getJSONObject("tags");
-            JSONArray tagsList = tags.getJSONArray("tags");
+            JSONObject illusts = jsonResponse.getJSONObject("userIllusts");
+            JSONObject illustID = illusts.getJSONObject(body.getString("illustId"));
 
-            // Check for "AI-Generated" tag
-            for (int i = 0; i < tagsList.length(); i++) {
-                String tag = tagsList.getJSONObject(i).getString("tag");
-                if (tag.equals("AI生成")) {
-                    return true;
-                }
-            }
+            // Check for AI type (1 = non-AI, 2 = AI)
+            return illustID.getInt("aiType") == 2;
         } catch (Exception e) {
             if (e instanceof JSONException) {
                 e.printStackTrace();
