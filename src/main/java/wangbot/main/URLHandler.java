@@ -28,17 +28,23 @@ public class URLHandler extends ListenerAdapter {
     private static final Pattern pixivPattern = Pattern.compile("https?://(?:www\\.)?pixiv\\.net/(?:en/)?artworks/\\d+");
     private static final Pattern dexPattern = Pattern.compile("https?://(?:www\\.)?mangadex\\.org/title/[^/]+/[^/]+");
     private static final Pattern facebookPattern = Pattern.compile("https?://(?:www\\.)?facebook\\.com/([^/]+|groups/[^/]+|story\\.php\\?story_fbid|permalink\\.php\\?story_fbid|share/p/[^/]+).*");
+    private static final Pattern instagramPattern = Pattern.compile("https?://(?:www\\.)?instagram\\.com/([^/]+).*");
 
     private final PixivAPIHandler pixivAPIHandler = new PixivAPIHandler();
     private final DexAPIHandler dexAPIHandler = new DexAPIHandler();
 
     boolean containsFix(String url) {
-        return url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net") || url.contains("facebed.com");
+        return url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net") || url.contains("facebed.com") || url.contains("instagramez.com");
     }
 
     // New method to handle Facebook links
     public String convertToFacebed(String url) {
         return url.replace("facebook.com", "facebed.com");
+    }
+
+    // New method to handle Instagram links
+    public String convertToInstagramez(String url) {
+        return url.replace("instagram.com", "instagramez.com");
     }
 
     @Override
@@ -67,6 +73,7 @@ public class URLHandler extends ListenerAdapter {
             String twitterUsername = "";
             String pixivUsername = "";
             String facebookId = "";
+            String instagramUsername = "";
 
             // Validate URL
             try {
@@ -86,6 +93,7 @@ public class URLHandler extends ListenerAdapter {
             Matcher pixivMatcher = pixivPattern.matcher(url);
             Matcher dexMatcher = dexPattern.matcher(url);
             Matcher facebookMatcher = facebookPattern.matcher(url);
+            Matcher instagramMatcher = instagramPattern.matcher(url);
 
             //Check if the link is from twitter/X
             if (twitterMatcher.find()) {
@@ -129,6 +137,12 @@ public class URLHandler extends ListenerAdapter {
                 fix = convertToFacebed(url);
             }
 
+            //Check if the link is from Instagram
+            else if (instagramMatcher.find()) {
+                instagramUsername = instagramMatcher.group(1);
+                fix = convertToInstagramez(url);
+            }
+
             // Add link to message if it's unique
             if (fix != null && uniqueLinks.add(fix)) {
                 if (!response.isEmpty()) {
@@ -140,6 +154,8 @@ public class URLHandler extends ListenerAdapter {
                     response.append("[Artwork ▸ ").append(pixivUsername).append("](").append(fix).append(")");
                 } else if (!facebookId.isEmpty()) {
                     response.append("[Facebook Post ▸ ").append(facebookId).append("](").append(fix).append(")");
+                } else if (!instagramUsername.isEmpty()) {
+                    response.append("[Instagram ▸ @").append(instagramUsername).append("](").append(fix).append(")");
                 } else {
                     response.append(fix);
                 }
