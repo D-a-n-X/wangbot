@@ -38,4 +38,28 @@ class URLHandlerTest {
         String expected = "https://www.example.com/somepage";
         assertEquals(expected, urlHandler.convertToFacebed(nonFacebookUrl));
     }
+
+    @Test
+        void convertToInstagramez_replacesInstagramDomainWithInstagramez() {
+            URLHandler urlHandler = new URLHandler();
+            String instagramUrl = "https://www.instagram.com/someuser";
+            String expected = "https://www.instagramez.com/someuser";
+            assertEquals(expected, urlHandler.convertToInstagramez(instagramUrl));
+        }
+
+        @Test
+        void convertToInstagramez_handlesUrlsWithoutWwwPrefix() {
+            URLHandler urlHandler = new URLHandler();
+            String instagramUrl = "https://instagram.com/someuser";
+            String expected = "https://instagramez.com/someuser";
+            assertEquals(expected, urlHandler.convertToInstagramez(instagramUrl));
+        }
+
+        @Test
+        void convertToInstagramez_doesNotModifyNonInstagramUrls() {
+            URLHandler urlHandler = new URLHandler();
+            String nonInstagramUrl = "https://www.example.com/somepage";
+            String expected = "https://www.example.com/somepage";
+            assertEquals(expected, urlHandler.convertToInstagramez(nonInstagramUrl));
+        }
 }
