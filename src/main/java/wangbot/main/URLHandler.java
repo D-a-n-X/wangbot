@@ -18,166 +18,222 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
-//Handles messages containing URLs and responses to those messages
+/**
+ * Handles messages containing URLs and responds with fixed/transformed links
+ */
 public class URLHandler extends ListenerAdapter {
+    private static final Logger LOGGER = Logger.getLogger(URLHandler.class.getName());
 
-    //Hyperlink regex pattern
-    private static final Pattern urlPattern = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
-    private static final Pattern twitterPattern = Pattern.compile("https?://(?:www\\.)?(twitter|x)\\.com/([^/]+)/status/\\d+");
-    private static final Pattern pixivPattern = Pattern.compile("https?://(?:www\\.)?pixiv\\.net/(?:en/)?artworks/\\d+");
-    private static final Pattern dexPattern = Pattern.compile("https?://(?:www\\.)?mangadex\\.org/title/[^/]+/[^/]+");
-    private static final Pattern facebookPattern = Pattern.compile("https?://(?:www\\.)?facebook\\.com/([^/]+|groups/[^/]+|story\\.php\\?story_fbid|permalink\\.php\\?story_fbid|share/p/[^/]+).*");
-    private static final Pattern instagramPattern = Pattern.compile("https?://(?:www\\.)?instagram\\.com/([^/]+).*");
+    // URL patterns
+    private static final Pattern URL_PATTERN = Pattern.compile("https?://\\S+", Pattern.CASE_INSENSITIVE);
+    private static final Pattern TWITTER_PATTERN = Pattern.compile("https?://(?:www\\.)?(twitter|x)\\.com/([^/]+)/status/\\d+");
+    private static final Pattern PIXIV_PATTERN = Pattern.compile("https?://(?:www\\.)?pixiv\\.net/(?:en/)?artworks/\\d+");
+    private static final Pattern DEX_PATTERN = Pattern.compile("https?://(?:www\\.)?mangadex\\.org/title/[^/]+/[^/]+");
+    private static final Pattern FACEBOOK_PATTERN = Pattern.compile("https?://(?:www\\.)?facebook\\.com/([^/]+|groups/[^/]+|story\\.php\\?story_fbid|permalink\\.php\\?story_fbid|share/p/[^/]+).*");
+    private static final Pattern INSTAGRAM_PATTERN = Pattern.compile("https?://(?:www\\.)?instagram\\.com/([^/]+).*");
 
-    private final PixivAPIHandler pixivAPIHandler = new PixivAPIHandler();
-    private final DexAPIHandler dexAPIHandler = new DexAPIHandler();
+    // Domain constants
+    private static final String TWITTER_DOMAIN = "twitter.com";
+    private static final String X_DOMAIN = "x.com";
+    private static final String FXTWITTER_DOMAIN = "fxtwitter.com";
+    private static final String FIXUPX_DOMAIN = "fixupx.com";
+    private static final String PIXIV_DOMAIN = "pixiv.net";
+    private static final String PHIXIV_DOMAIN = "phixiv.net";
+    private static final String FACEBOOK_DOMAIN = "facebook.com";
+    private static final String FACEBED_DOMAIN = "facebed.com";
+    private static final String INSTAGRAM_DOMAIN = "instagram.com";
+    private static final String INSTAGRAMEZ_DOMAIN = "instagramez.com";
 
+    private final PixivAPIHandler pixivAPIHandler;
+    private final DexAPIHandler dexAPIHandler;
+
+    public URLHandler() {
+        this.pixivAPIHandler = new PixivAPIHandler();
+        this.dexAPIHandler = new DexAPIHandler();
+    }
+
+    // Constructor for testing purposes
+    URLHandler(PixivAPIHandler pixivAPIHandler, DexAPIHandler dexAPIHandler) {
+        this.pixivAPIHandler = pixivAPIHandler;
+        this.dexAPIHandler = dexAPIHandler;
+    }
+
+    /**
+     * Checks if the URL is already a fixed version
+     */
     boolean containsFix(String url) {
-        return url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net") || url.contains("facebed.com") || url.contains("instagramez.com");
+        return url.contains(FXTWITTER_DOMAIN) ||
+               url.contains(FIXUPX_DOMAIN) ||
+               url.contains(PHIXIV_DOMAIN) ||
+               url.contains(FACEBED_DOMAIN) ||
+               url.contains(INSTAGRAMEZ_DOMAIN);
     }
 
-    // New method to handle Facebook links
+    /**
+     * Converts Facebook URLs to Facebed URLs
+     */
     public String convertToFacebed(String url) {
-        return url.replace("facebook.com", "facebed.com");
+        return url.replace(FACEBOOK_DOMAIN, FACEBED_DOMAIN);
     }
 
-    // New method to handle Instagram links
+    /**
+     * Converts Instagram URLs to Instagramez URLs
+     */
     public String convertToInstagramez(String url) {
-        return url.replace("instagram.com", "instagramez.com");
+        return url.replace(INSTAGRAM_DOMAIN, INSTAGRAMEZ_DOMAIN);
+    }
+
+    /**
+     * Converts Twitter/X URLs to fixed versions
+     */
+    private String convertTwitterUrl(String url) {
+        return url.replace(TWITTER_DOMAIN, FXTWITTER_DOMAIN)
+                 .replace(X_DOMAIN, FIXUPX_DOMAIN);
+    }
+
+    /**
+     * Converts Pixiv URLs to Phixiv URLs
+     */
+    private String convertPixivUrl(String url) {
+        return url.replace(PIXIV_DOMAIN, PHIXIV_DOMAIN);
+    }
+
+    /**
+     * Sanitizes a URL by removing tracking parameters
+     */
+    private String sanitizeUrl(String url) {
+        try {
+            URI uri = new URI(url);
+            return uri.getScheme() + "://" + uri.getHost() + uri.getPath();
+        } catch (URISyntaxException e) {
+            LOGGER.log(Level.WARNING, "Invalid URL: " + url, e);
+            return url; // Return original if parsing fails
+        }
     }
 
     @Override
     public void onMessageReceived(MessageReceivedEvent event) {
-        // We don't want to respond to other bot accounts, including ourselves
-        if (event.getAuthor().isBot())
-            return;
+        // Skip messages from bots
+        if (event.getAuthor().isBot()) return;
 
-        //Read the message
         Message message = event.getMessage();
         String content = message.getContentRaw();
-        // getContentRaw() is an atomic getter
-        // getContentDisplay() is a lazy getter which modifies the content for e.g. console view (strip discord formatting)
-
         MessageChannel channel = event.getChannel();
-        EmbedBuilder embedBuilder = new EmbedBuilder();
-        StringBuilder response = new StringBuilder();
-        Set<String> uniqueLinks = new HashSet<>();
 
-        //Regex pattern matching for hyperlinks
-        Matcher urlMatcher = urlPattern.matcher(content);
+        // Process links
+        ProcessedLinks processedLinks = processLinks(content);
+
+        // Send processed text links if any
+        if (!processedLinks.textResponse.isEmpty()) {
+            channel.sendMessage(processedLinks.textResponse.toString()).queue(
+                sentMessage -> message.suppressEmbeds(true).queue()
+            );
+        }
+
+        // Send embed if any
+        if (!processedLinks.embedBuilder.isEmpty()) {
+            MessageCreateBuilder messageBuilder = new MessageCreateBuilder();
+            messageBuilder.setEmbeds(processedLinks.embedBuilder.build());
+
+            channel.sendMessage(messageBuilder.build()).queue(
+                sentMessage -> message.suppressEmbeds(true).queue()
+            );
+        }
+    }
+
+    /**
+     * Container class for processed links results
+     */
+    private static class ProcessedLinks {
+        final StringBuilder textResponse = new StringBuilder();
+        EmbedBuilder embedBuilder = new EmbedBuilder();
+        final Set<String> uniqueLinks = new HashSet<>();
+    }
+
+    /**
+     * Process links in the message content
+     */
+    ProcessedLinks processLinks(String content) {
+        ProcessedLinks result = new ProcessedLinks();
+        Matcher urlMatcher = URL_PATTERN.matcher(content);
 
         while (urlMatcher.find()) {
             String url = urlMatcher.group(0);
-            String fix = "";
-            String twitterUsername = "";
-            String pixivUsername = "";
-            String facebookId = "";
-            String instagramUsername = "";
+            url = sanitizeUrl(url);
 
-            // Validate URL
-            try {
-                URI uri = new URI(url);
-                // Remove tracking parameters
-                url = uri.getScheme() + "://" + uri.getHost() + uri.getPath();
-            } catch (URISyntaxException e) {
-                continue; // Skip invalid URLs
-            }
+            // Skip already fixed links
+            if (containsFix(url)) continue;
 
-            //Check if the link is already fixed
-            if (containsFix(url)) {
-                continue;
-            }
-
-            Matcher twitterMatcher = twitterPattern.matcher(url);
-            Matcher pixivMatcher = pixivPattern.matcher(url);
-            Matcher dexMatcher = dexPattern.matcher(url);
-            Matcher facebookMatcher = facebookPattern.matcher(url);
-            Matcher instagramMatcher = instagramPattern.matcher(url);
-
-            //Check if the link is from twitter/X
-            if (twitterMatcher.find()) {
-                // Extract username from URL
-                twitterUsername = twitterMatcher.group(2);
-
-                //Replace with fxtwitter/fixupx
-                fix = url.replace("twitter.com", "fxtwitter.com")
-                        .replace("x.com", "fixupx.com");
-            }
-
-            //Check if the link is from pixiv
-            else if (pixivMatcher.find()) {
-
-                // Fetch JSON response from Pixiv API
-                JSONObject pixivResponse;
-                try {
-                    pixivResponse = pixivAPIHandler.fetchJson(url);
-                } catch (IOException | URISyntaxException e) {
-                    throw new RuntimeException(e);
-                }
-
-                //Check for AI generated artwork
-                if (pixivAPIHandler.isAIGenerated(pixivResponse)) {
-                    fix = "[This artwork is AI generated](<" + url + ">)";
-                } else {
-                    //Replace with phixiv
-                    pixivUsername = pixivAPIHandler.getUserName(pixivResponse);
-                    fix = url.replace("pixiv.net", "phixiv.net");
-                }
-            }
-
-            //Check if the link is from MangaDex
-            else if (dexMatcher.find()) {
-                embedBuilder = dexAPIHandler.generateDexEmbed(url);
-            }
-
-            //Check if the link is from Facebook
-            else if (facebookMatcher.find()) {
-                facebookId = facebookMatcher.group(1);
-                fix = convertToFacebed(url);
-            }
-
-            //Check if the link is from Instagram
-            else if (instagramMatcher.find()) {
-                instagramUsername = instagramMatcher.group(1);
-                fix = convertToInstagramez(url);
-            }
-
-            // Add link to message if it's unique
-            if (fix != null && uniqueLinks.add(fix)) {
-                if (!response.isEmpty()) {
-                    response.append("\n");
-                }
-                if (!twitterUsername.isEmpty()) {
-                    response.append("[Tweet ▸ @").append(twitterUsername).append("](").append(fix).append(")");
-                } else if (!pixivUsername.isEmpty()) {
-                    response.append("[Artwork ▸ ").append(pixivUsername).append("](").append(fix).append(")");
-                } else if (!facebookId.isEmpty()) {
-                    response.append("[Facebook Post ▸ ").append(facebookId).append("](").append(fix).append(")");
-                } else if (!instagramUsername.isEmpty()) {
-                    response.append("[Instagram ▸ @").append(instagramUsername).append("](").append(fix).append(")");
-                } else {
-                    response.append(fix);
-                }
-            }
+            processUrl(url, result);
         }
 
-        if (!response.isEmpty()) {
-            channel.sendMessage(response.toString()).queue((sentMessage) -> {
-                message.suppressEmbeds(true).queue();
-            });
+        return result;
+    }
+
+    /**
+     * Process a single URL and update the result accordingly
+     */
+    private void processUrl(String url, ProcessedLinks result) {
+        String fixedUrl = null;
+        String username = null;
+
+        if (TWITTER_PATTERN.matcher(url).find()) {
+            Matcher matcher = TWITTER_PATTERN.matcher(url);
+            if (matcher.find()) {
+                username = matcher.group(2);
+                fixedUrl = convertTwitterUrl(url);
+                addLinkToResponse(result, fixedUrl, "Tweet ▸ @" + username);
+            }
+        } else if (PIXIV_PATTERN.matcher(url).find()) {
+            processPixivUrl(url, result);
+        } else if (DEX_PATTERN.matcher(url).find()) {
+            result.embedBuilder = dexAPIHandler.generateDexEmbed(url);
+        } else if (FACEBOOK_PATTERN.matcher(url).find()) {
+            fixedUrl = convertToFacebed(url);
+            addLinkToResponse(result, fixedUrl, "Facebook Post");
+        } else if (INSTAGRAM_PATTERN.matcher(url).find()) {
+            fixedUrl = convertToInstagramez(url);
+            addLinkToResponse(result, fixedUrl, "Instagram Post");
         }
+    }
 
-        if (!embedBuilder.isEmpty()) {
-            MessageEmbed embed = embedBuilder.build();
-            // Create a MessageCreateBuilder and add the embed
-            MessageCreateBuilder messageBuilder = new MessageCreateBuilder();
-            messageBuilder.setEmbeds(embed);
+    /**
+     * Process Pixiv URLs with API call
+     */
+    private void processPixivUrl(String url, ProcessedLinks result) {
+        try {
+            JSONObject pixivResponse = pixivAPIHandler.fetchJson(url);
 
-            // Send the message
-            channel.sendMessage(messageBuilder.build()).queue((sentMessage) -> {
-                message.suppressEmbeds(true).queue();
-            });
+            if (pixivAPIHandler.isAIGenerated(pixivResponse)) {
+                String aiGeneratedLink = "[This artwork is AI generated](<" + url + ">)";
+                addLinkToResponse(result, aiGeneratedLink, null);
+            } else {
+                String username = pixivAPIHandler.getUserName(pixivResponse);
+                String fixedUrl = convertPixivUrl(url);
+                addLinkToResponse(result, fixedUrl, "Artwork ▸ " + username);
+            }
+        } catch (IOException | URISyntaxException e) {
+            LOGGER.log(Level.WARNING, "Error fetching Pixiv data for URL: " + url, e);
+        }
+    }
+
+    /**
+     * Add a link to the response, with optional context prefix
+     */
+    private void addLinkToResponse(ProcessedLinks result, String link, String prefix) {
+        if (result.uniqueLinks.add(link)) {
+            if (!result.textResponse.isEmpty()) {
+                result.textResponse.append("\n");
+            }
+
+            if (prefix != null && !prefix.isEmpty()) {
+                result.textResponse.append("[").append(prefix).append("](").append(link).append(")");
+            } else {
+                result.textResponse.append(link);
+            }
         }
     }
 }
