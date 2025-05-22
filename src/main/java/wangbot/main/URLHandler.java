@@ -27,12 +27,18 @@ public class URLHandler extends ListenerAdapter {
     private static final Pattern twitterPattern = Pattern.compile("https?://(?:www\\.)?(twitter|x)\\.com/([^/]+)/status/\\d+");
     private static final Pattern pixivPattern = Pattern.compile("https?://(?:www\\.)?pixiv\\.net/(?:en/)?artworks/\\d+");
     private static final Pattern dexPattern = Pattern.compile("https?://(?:www\\.)?mangadex\\.org/title/[^/]+/[^/]+");
+    private static final Pattern facebookPattern = Pattern.compile("https?://(?:www\\.)?facebook\\.com/([^/]+|groups/[^/]+|story\\.php\\?story_fbid|permalink\\.php\\?story_fbid|share/p/[^/]+).*");
 
     private final PixivAPIHandler pixivAPIHandler = new PixivAPIHandler();
     private final DexAPIHandler dexAPIHandler = new DexAPIHandler();
 
     boolean containsFix(String url) {
-        return url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net");
+        return url.contains("fxtwitter.com") || url.contains("fixupx.com") || url.contains("phixiv.net") || url.contains("facebed.com");
+    }
+
+    // New method to handle Facebook links
+    public String convertToFacebed(String url) {
+        return url.replace("facebook.com", "facebed.com");
     }
 
     @Override
@@ -60,6 +66,7 @@ public class URLHandler extends ListenerAdapter {
             String fix = "";
             String twitterUsername = "";
             String pixivUsername = "";
+            String facebookId = "";
 
             // Validate URL
             try {
@@ -78,10 +85,10 @@ public class URLHandler extends ListenerAdapter {
             Matcher twitterMatcher = twitterPattern.matcher(url);
             Matcher pixivMatcher = pixivPattern.matcher(url);
             Matcher dexMatcher = dexPattern.matcher(url);
+            Matcher facebookMatcher = facebookPattern.matcher(url);
 
             //Check if the link is from twitter/X
             if (twitterMatcher.find()) {
-
                 // Extract username from URL
                 twitterUsername = twitterMatcher.group(2);
 
@@ -116,6 +123,12 @@ public class URLHandler extends ListenerAdapter {
                 embedBuilder = dexAPIHandler.generateDexEmbed(url);
             }
 
+            //Check if the link is from Facebook
+            else if (facebookMatcher.find()) {
+                facebookId = facebookMatcher.group(1);
+                fix = convertToFacebed(url);
+            }
+
             // Add link to message if it's unique
             if (fix != null && uniqueLinks.add(fix)) {
                 if (!response.isEmpty()) {
@@ -125,6 +138,8 @@ public class URLHandler extends ListenerAdapter {
                     response.append("[Tweet ▸ @").append(twitterUsername).append("](").append(fix).append(")");
                 } else if (!pixivUsername.isEmpty()) {
                     response.append("[Artwork ▸ ").append(pixivUsername).append("](").append(fix).append(")");
+                } else if (!facebookId.isEmpty()) {
+                    response.append("[Facebook Post ▸ ").append(facebookId).append("](").append(fix).append(")");
                 } else {
                     response.append(fix);
                 }
