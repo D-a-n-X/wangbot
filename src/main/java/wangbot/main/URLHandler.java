@@ -40,6 +40,8 @@ public class URLHandler extends ListenerAdapter {
     private static final String X_DOMAIN = "x.com";
     private static final String FXTWITTER_DOMAIN = "fxtwitter.com";
     private static final String FIXUPX_DOMAIN = "fixupx.com";
+    private static final String VXTWITTER_DOMAIN = "vxtwitter.com";
+    private static final String FIXVX_DOMAIN = "fixvx.com";
     private static final String PIXIV_DOMAIN = "pixiv.net";
     private static final String PHIXIV_DOMAIN = "phixiv.net";
     private static final String FACEBOOK_DOMAIN = "facebook.com";
@@ -65,11 +67,13 @@ public class URLHandler extends ListenerAdapter {
      * Checks if the URL is already a fixed version
      */
     boolean containsFix(String url) {
-        return url.contains(FXTWITTER_DOMAIN) ||
-               url.contains(FIXUPX_DOMAIN) ||
-               url.contains(PHIXIV_DOMAIN) ||
-               url.contains(FACEBED_DOMAIN) ||
-               url.contains(INSTAGRAMEZ_DOMAIN);
+        return  url.contains(FXTWITTER_DOMAIN) ||
+                url.contains(FIXUPX_DOMAIN) ||
+                url.contains(VXTWITTER_DOMAIN) ||
+                url.contains(FIXVX_DOMAIN) ||
+                url.contains(PHIXIV_DOMAIN) ||
+                url.contains(FACEBED_DOMAIN) ||
+                url.contains(INSTAGRAMEZ_DOMAIN);
     }
 
     /**
@@ -92,6 +96,10 @@ public class URLHandler extends ListenerAdapter {
     private String convertTwitterUrl(String url) {
         return url.replace(TWITTER_DOMAIN, FXTWITTER_DOMAIN)
                  .replace(X_DOMAIN, FIXUPX_DOMAIN);
+    }
+    private String reconvertTwitterUrl(String url) {
+        return url.replace(TWITTER_DOMAIN, VXTWITTER_DOMAIN)
+                .replace(X_DOMAIN, FIXVX_DOMAIN);
     }
 
     /**
@@ -184,7 +192,7 @@ public class URLHandler extends ListenerAdapter {
             Matcher matcher = TWITTER_PATTERN.matcher(url);
             if (matcher.find()) {
                 username = matcher.group(2);
-                fixedUrl = convertTwitterUrl(url);
+                fixedUrl = reconvertTwitterUrl(url);
                 addLinkToResponse(result, fixedUrl, "Tweet ▸ @" + username);
             }
         } else if (PIXIV_PATTERN.matcher(url).find()) {
